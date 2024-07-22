@@ -30,6 +30,10 @@ import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { VoiceType } from "@/types";
+import { useToast } from "@/components/ui/use-toast";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   podcastDescription: z
@@ -45,7 +49,7 @@ const CreatePodcast = () => {
   const [imageStorageId, setImageStorageId] = useState<Id<"_storage"> | null>(
     null
   );
-  const [imageUrl, setImaageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
 
   const [audioUrl, setAudioUrl] = useState("");
   const [audioStorageId, setAudioStorageId] = useState<Id<"_storage"> | null>(
@@ -66,11 +70,47 @@ const CreatePodcast = () => {
     },
   });
 
-  // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+  const { toast } = useToast();
+  const createPodcast = useMutation(api.podcasts.createPodcast);
+  const router = useRouter();
+
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    try {
+      setIsSubmitting(true);
+      if (!audioUrl || !imageUrl || !voiceType) {
+        toast({
+          title: "Please generate audio and image",
+        });
+        throw new Error("Please generate audio and image");
+      }
+
+      const podcast = await createPodcast({
+        podcastTitle: data.podcastTitle,
+        podcastDescription: data.podcastDescription,
+        audioUrl,
+        imageUrl,
+        voiceType,
+        imagePrompt,
+        voicePrompt,
+        views: 0,
+        audioDuration,
+        audioStorageId: audioStorageId!,
+        imageStorageId: imageStorageId!,
+      });
+
+      toast({
+        title: "Podcast created",
+      });
+      router.push("/");
+    } catch (error) {
+      console.log(error);
+      toast({
+        title: "Error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -172,7 +212,13 @@ const CreatePodcast = () => {
               setVoicePrompt={setVoicePrompt}
               setAudioDuration={setAudioDuration}
             />
-            <GenerateThumbnail />
+            <GenerateThumbnail
+              setImage={setImageUrl}
+              setImageStorageId={setImageStorageId}
+              image={imageUrl}
+              imagePrompt={imagePrompt}
+              setImagePrompt={setImagePrompt}
+            />
 
             <div className="mt-10 w-full">
               <Button

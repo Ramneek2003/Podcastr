@@ -4,9 +4,12 @@ import React, { useState } from "react";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { Loader } from "lucide-react";
-import { useAction } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { v4 as uuidv4 } from "uuid";
+import { generateUploadUrl } from "@/convex/files";
+import { useUploadFiles } from "@xixixao/uploadstuff/react";
+import { useToast } from "@/components/ui/use-toast";
 
 const useGeneratePodcast = ({
   setAudio,
@@ -14,15 +17,25 @@ const useGeneratePodcast = ({
   voicePrompt,
   setAudioStorageId,
 }: GeneratePodcastProps) => {
+  const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const { startUpload } = useUploadFiles(generateUploadUrl);
+
   const getPodcastAudio = useAction(api.openai.generateAudioAction);
+
+  const getAudioUrl = useMutation(api.podcasts.getUrl);
 
   const generatePodcast = async () => {
     setIsGenerating(true);
     setAudio("");
 
     if (!voicePrompt) {
-      return setIsGenerating(false);
+      toast({
+        title: "Please provide a voice type to generate a podcast.",
+      });
+      setIsGenerating(false);
+      return;
     }
 
     try {
@@ -31,11 +44,31 @@ const useGeneratePodcast = ({
         input: voicePrompt,
       });
 
+      if (!response) {
+        throw new Error("No response received from the API");
+      }
+
       const blob = new Blob([response], { type: "audio/mpeg" });
       const fileName = `podcast-${uuidv4()}.mp3`;
 
       const file = new File([blob], fileName, { type: "audio/mpeg" });
+
+      const uploaded = await startUpload([file]);
+      const storageId = (uploaded[0].response as any).storageId;
+
+      setAudioStorageId(storageId);
+
+      const audioUrl = await getAudioUrl({ storageId });
+      setAudio(audioUrl!);
+
+      toast({
+        title: "Podcast generated successfully",
+      });
     } catch (error) {
+      toast({
+        title: "Error creating a podcast",
+        variant: "destructive",
+      });
       console.log("Error in generating podcast", error);
     } finally {
       setIsGenerating(false);
@@ -70,6 +103,7 @@ const GeneratePodcast = (props: GeneratePodcastProps) => {
           disabled={isGenerating}
           type="submit"
           className="text-16 py-4 bg-orange-1 font-bold text-white-1"
+          onClick={generatePodcast}
         >
           {isGenerating ? (
             <>

@@ -7,8 +7,8 @@ export default defineSchema({
     user: v.id("users"),
     podcastTitle: v.string(),
     podcastDescription: v.string(),
-    audioURL: v.union(v.string(), v.null()), // another way to write optional
-    imgURL: v.optional(v.string()),
+    audioUrl: v.union(v.string(), v.null()), // another way to write optional
+    imageUrl: v.optional(v.string()),
     imageStorageId: v.optional(v.id("_storage")),
     author: v.string(),
     authorId: v.string(),
