@@ -27,9 +27,9 @@ const PodcastDetails = ({
     podcastId,
   });
 
-  if (!similarPodcasts || !podcast) {
-    <LoaderSpinner />;
-  }
+  // if (!similarPodcasts || !podcast) {
+  //   <LoaderSpinner />;
+  // }
   return (
     <section className="flex w-full flex-col">
       <header className="mt-9 flex items-center justify-between">
@@ -48,7 +48,14 @@ const PodcastDetails = ({
       <PodcastDetailPlayer
         isOwner={isOwner}
         podcastId={podcast?._id!}
-        {...podcast}
+        audioUrl={podcast?.audioUrl!}
+        podcastTitle={podcast?.podcastTitle!}
+        author={podcast?.author!}
+        imageUrl={podcast?.imageUrl!}
+        imageStorageId={podcast?.imageStorageId!}
+        audioStorageId={podcast?.audioStorageId!}
+        authorImageUrl={podcast?.authorImageUrl!}
+        authorId={podcast?.authorId!}
       />
 
       <p className="text-white-2 text-16 pb-8 pt-[45px] font-medium max-md:text-center">

@@ -26,17 +26,17 @@ const Home = () => {
               );
             }
           )}
-          {podcastData?.map(({ id, title, description, imgURL }) => {
+          {/* {podcastData?.map(({ id, title, description, imgURL }) => {
             return (
               <PodcastCard
                 key={id}
-                imgURL={imgURL}
+                imgUrl={imgURL}
                 description={description}
                 title={title}
                 podcastId={id}
               />
             );
-          })}
+          })} */}
         </div>
       </section>
     </div>
